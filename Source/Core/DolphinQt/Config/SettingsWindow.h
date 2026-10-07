@@ -51,6 +51,7 @@ enum class SettingsWindowPaneIndex : int
   Wii,
   Triforce,
   Advanced,
+  MiSTer,
 };
 
 class SettingsWindow final : public StackedSettingsWindow
