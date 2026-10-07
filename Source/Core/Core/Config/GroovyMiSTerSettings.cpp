@@ -9,10 +9,16 @@ namespace Config
 const Info<bool> GROOVY_MISTER_ENABLED{{System::Main, "GroovyMiSTer", "Enabled"}, false};
 const Info<std::string> GROOVY_MISTER_HOST{{System::Main, "GroovyMiSTer", "Host"}, ""};
 
-// Tri-sync arcade monitor (15/25/31 kHz). switchres's own default is generic_15, which
-// refuses every 31 kHz mode and so would reject the 480p GameCube and Wii titles outright.
+// 15 kHz arcade or consumer CRT, which is what a MiSTer is usually driving. It is the
+// setting that decides how a console's video mode reaches the display: a 480p title is
+// 31 kHz, which this band cannot scan, so it arrives interlaced instead (see
+// GROOVY_MISTER_INTERLACE). Change it to arcade_15_25_31 for a tri-sync monitor, or
+// vesa_480 / pc_31_120 for a PC monitor, and those modes arrive as rendered.
+//
+// Not switchres's own default of generic_15: that refuses every 31 kHz mode outright
+// rather than interlacing it, so a 480p title would simply not be streamed.
 const Info<std::string> GROOVY_MISTER_MONITOR_PRESET{
-    {System::Main, "GroovyMiSTer", "MonitorPreset"}, "arcade_15_25_31"};
+    {System::Main, "GroovyMiSTer", "MonitorPreset"}, "arcade_15"};
 const Info<std::string> GROOVY_MISTER_SWITCHRES_INI{
     {System::Main, "GroovyMiSTer", "SwitchresIni"}, ""};
 

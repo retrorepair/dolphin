@@ -222,7 +222,7 @@ bool Output::Open()
   m_active.store(true, std::memory_order_release);
   m_sender = std::thread([this]() { SenderLoop(); });
 
-  INFO_LOG_FMT(VIDEO, "[MiSTer] Output enabled (host={}, codec={}, {} bpp).", m_cfg_host,
+  NOTICE_LOG_FMT(VIDEO, "[MiSTer] Output enabled (host={}, codec={}, {} bpp).", m_cfg_host,
                CodecName(m_codec), m_bpp);
   return true;
 }
@@ -255,7 +255,7 @@ void Output::Close()
   ReleaseGpuResources();
   ShutdownSwitchres();
 
-  INFO_LOG_FMT(VIDEO, "[MiSTer] Output closed.");
+  NOTICE_LOG_FMT(VIDEO, "[MiSTer] Output closed.");
 }
 
 // =================================================================================
@@ -327,7 +327,7 @@ bool Output::TryConnect()
   m_have_mode = false;
   m_src_w = m_src_h = 0;
 
-  INFO_LOG_FMT(VIDEO, "[MiSTer] Connected to {} (client v{}).", m_cfg_host, gmw_get_version());
+  NOTICE_LOG_FMT(VIDEO, "[MiSTer] Connected to {} (client v{}).", m_cfg_host, gmw_get_version());
   return true;
 }
 
@@ -550,7 +550,7 @@ bool Output::EnsureMode(u32 src_w, u32 src_h, double refresh_hz)
                   ml.h_active, ml.v_active, srm.interlace ? "i" : "p", srm.hfreq / 1000.0,
                   m_cfg_monitor_preset);
 
-  INFO_LOG_FMT(VIDEO, "[MiSTer] {}", msg);
+  NOTICE_LOG_FMT(VIDEO, "[MiSTer] {}", msg);
   INFO_LOG_FMT(VIDEO,
                "[MiSTer]   modeline: pclock={:.4f}MHz h({} {} {}) v({} {} {}) interlace={}",
                ml.pclock, ml.h_begin, ml.h_end, ml.h_total, ml.v_begin, ml.v_end, ml.v_total,
@@ -820,7 +820,7 @@ void Output::SenderLoop()
     if (epoch != m_reconnect_epoch)
     {
       m_reconnect_epoch = epoch;
-      INFO_LOG_FMT(VIDEO, "[MiSTer] Client reconnected (epoch {}).", epoch);
+      NOTICE_LOG_FMT(VIDEO, "[MiSTer] Client reconnected (epoch {}).", epoch);
     }
 
     // Receive pending ACKs. Not optional: the client updates fpga.frameEcho only inside

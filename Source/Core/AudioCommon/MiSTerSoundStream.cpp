@@ -23,6 +23,12 @@ constexpr u32 FALLBACK_SAMPLE_RATE = 48000;
 // 5.33ms at 48kHz. Small enough that the ring never carries meaningful latency, large
 // enough that the pull does not cost more in wakeups than it moves in samples.
 constexpr u32 FRAMES_PER_CHUNK = 256;
+
+// Most chunks to pull in one wake-up before giving up and resynchronising. A wake-up is
+// routinely late (see SoundLoop), so catching up is the normal case, not an error - but a
+// machine that has been suspended, or a debugger break, can leave an arbitrarily large
+// debt, and replaying minutes of stale audio to clear it would be worse than dropping it.
+constexpr u32 MAX_CHUNKS_PER_WAKE = 8;
 }  // namespace
 
 MiSTerSound::MiSTerSound() = default;
@@ -76,33 +82,40 @@ void MiSTerSound::SoundLoop()
 
   std::array<s16, FRAMES_PER_CHUNK * 2> chunk{};
 
-  // Pace off the clock rather than off a device, accumulating the chunk period so rounding
-  // cannot drift: a device-less backend has nothing else to pull against, and the mixer's
-  // own granule queue absorbs the difference between this and the emulated rate.
-  const u32 rate = GetMixer()->GetSampleRate() != 0 ? GetMixer()->GetSampleRate() :
-                                                      FALLBACK_SAMPLE_RATE;
+  // Pace off the clock rather than off a device: a device-less backend has nothing else to
+  // pull against, and the mixer's own granule queue absorbs the difference between this and
+  // the emulated rate.
+  const u32 rate =
+      GetMixer()->GetSampleRate() != 0 ? GetMixer()->GetSampleRate() : FALLBACK_SAMPLE_RATE;
   const auto chunk_period = std::chrono::nanoseconds(1000000000ULL * FRAMES_PER_CHUNK / rate);
-  auto next_wake = std::chrono::steady_clock::now();
+  auto next_pull = std::chrono::steady_clock::now();
 
   while (m_run_thread.IsSet())
   {
-    next_wake += chunk_period;
-
-    GetMixer()->Mix(chunk.data(), FRAMES_PER_CHUNK);
-
-    // Mixer::Mix already fed the tap in Mixer.cpp, so there is nothing to forward here:
-    // this thread exists to provide the pull that no audio device is providing.
-
+    // Pull every chunk that has fallen due, not just one.
+    //
+    // Windows' default timer granularity is ~15.6ms against a 5.33ms chunk, so a wake-up is
+    // routinely two or three chunks late. Pulling a single chunk per wake-up would drain the
+    // mixer at a third of the rate the emulated DSP fills it, which Dolphin reports as
+    // "Granule Queue has completely filled and audio samples are being dropped" - and the
+    // MiSTer then gets a third of the audio it needs. Accumulating next_pull by the exact
+    // chunk period keeps the long-run rate right whatever the timer does.
     const auto now = std::chrono::steady_clock::now();
-    if (next_wake > now)
+    u32 pulled = 0;
+    while ((next_pull <= now) && (pulled < MAX_CHUNKS_PER_WAKE))
     {
-      std::this_thread::sleep_until(next_wake);
+      // Mixer::Mix feeds the tap in Mixer.cpp on its way out, so there is nothing to forward
+      // here: this thread exists only to provide the pull no audio device is providing.
+      GetMixer()->Mix(chunk.data(), FRAMES_PER_CHUNK);
+      next_pull += chunk_period;
+      ++pulled;
     }
-    else if (now - next_wake > chunk_period * 8)
-    {
-      // Fell far enough behind that catching up would mean a burst of stale audio. Resync
-      // to now and let the mixer's own latency control settle it.
-      next_wake = now;
-    }
+
+    // Still behind after the cap: the debt is too large to be timer jitter, so drop it
+    // rather than replay stale audio, and let the mixer's own latency control settle.
+    if (next_pull < now)
+      next_pull = now;
+
+    std::this_thread::sleep_until(next_pull);
   }
 }
