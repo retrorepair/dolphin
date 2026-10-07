@@ -31,6 +31,8 @@ add_library(core
   Config/FreeLookSettings.h
   Config/GraphicsSettings.cpp
   Config/GraphicsSettings.h
+  Config/GroovyMiSTerSettings.cpp
+  Config/GroovyMiSTerSettings.h
   Config/MainSettings.cpp
   Config/MainSettings.h
   Config/NetplaySettings.cpp

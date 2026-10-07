@@ -13,6 +13,7 @@
 #include "Common/Config/Config.h"
 #include "Common/Logging/Log.h"
 
+#include "VideoCommon/GroovyMiSTer/GroovyMiSTer.h"
 #include "VideoCommon/OnScreenDisplay.h"
 #include "VideoCommon/PerformanceMetrics.h"
 
@@ -861,6 +862,17 @@ void VideoInterfaceManager::OutputField(FieldType field, u64 ticks)
   }
 
   LogField(field, xfbAddr);
+
+  // The GroovyMiSTer output needs the target refresh rate and which field this is, and
+  // neither rides the XFB. They are published here because this is the CPU thread, where
+  // the VI registers they are derived from are the ones actually being written - reading
+  // them from the video thread races the writer. FieldType::Odd is the top field, which is
+  // the protocol's field 0.
+  if (xfbAddr && GroovyMiSTer::IsActive())
+  {
+    GroovyMiSTer::OnFieldOutput(field == FieldType::Odd ? 0 : 1, GetTargetRefreshRateNumerator(),
+                                GetTargetRefreshRateDenominator());
+  }
 
   // Outputting the entire frame using a single set of VI register values isn't accurate, as games
   // can change the register values during scanout. To correctly emulate the scanout process, we

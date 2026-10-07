@@ -116,6 +116,9 @@ private:
 
   void ProcessFrameDumping(u64 ticks) const;
 
+  // Hands the XFB to the GroovyMiSTer output. No-op unless it is streaming.
+  void ProcessGroovyMiSTer() const;
+
   void OnBackBufferSizeChanged();
 
   // Scales a raw XFB resolution to the target (display) aspect ratio,

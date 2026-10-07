@@ -17,6 +17,7 @@
 #include "Core/Config/MainSettings.h"
 #include "Core/Core.h"
 #include "Core/System.h"
+#include "VideoCommon/GroovyMiSTer/GroovyMiSTer.h"
 
 static u32 DPL2QualityToFrameBlockSize(AudioCommon::DPL2Quality quality)
 {
@@ -181,6 +182,13 @@ std::size_t Mixer::Mix(s16* samples, std::size_t num_samples)
     if (!m_config_gba_routing_enabled || !m_config_gba_output_enabled[i])
       m_gba_mixers[i].Mix(samples, num_samples);
   }
+
+  // Mirror the finished mix to the MiSTer. Whatever is about to reach the host device
+  // reaches the CRT's speakers too, in step with the video it belongs to. The tap only
+  // copies into a ring - the Groovy sender thread owns the socket - so this costs a memcpy
+  // and never blocks the audio thread. No-op unless the output is streaming with audio on.
+  if (GroovyMiSTer::IsAudioActive())
+    GroovyMiSTer::OnAudioChunk(samples, static_cast<u32>(num_samples));
 
   return num_samples;
 }

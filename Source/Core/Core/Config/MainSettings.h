@@ -22,6 +22,7 @@
 #define BACKEND_PULSEAUDIO "Pulse"
 #define BACKEND_OPENSLES "OpenSLES"
 #define BACKEND_WASAPI _trans("WASAPI (Exclusive Mode)")
+#define BACKEND_MISTER _trans("MiSTer (GroovyMiSTer)")
 
 namespace PowerPC
 {

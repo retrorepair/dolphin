@@ -685,6 +685,12 @@ dolphin_find_optional_system_library_pkgconfig(lz4 liblz4>=1.8 LZ4::LZ4 External
 
 dolphin_find_optional_system_library_pkgconfig(SPNG spng spng::spng Externals/libspng)
 
+# GroovyMiSTer output: the noGPU streaming client and switchres as a modeline calculator.
+# There is no system package for either, and both are needed before Core/VideoCommon.
+message(STATUS "Using static GroovyMiSTer client and switchres from Externals")
+add_subdirectory(Externals/groovymister)
+add_subdirectory(Externals/switchres)
+
 # Using static FreeSurround from Externals
 # There is no system FreeSurround library.
 message(STATUS "Using static FreeSurround from Externals")

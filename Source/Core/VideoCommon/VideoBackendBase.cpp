@@ -54,6 +54,7 @@
 #include "VideoCommon/FramebufferManager.h"
 #include "VideoCommon/GeometryShaderManager.h"
 #include "VideoCommon/GraphicsModSystem/Runtime/GraphicsModManager.h"
+#include "VideoCommon/GroovyMiSTer/GroovyMiSTer.h"
 #include "VideoCommon/OnScreenDisplay.h"
 #include "VideoCommon/PixelEngine.h"
 #include "VideoCommon/PixelShaderManager.h"
@@ -366,11 +367,20 @@ bool VideoBackendBase::InitializeShared(std::unique_ptr<AbstractGfx> gfx,
   g_shader_cache->InitializeShaderCache();
   system.GetCustomResourceManager().Initialize();
 
+  // Last, because it creates GPU resources of its own and so needs g_gfx live. A MiSTer
+  // that is off or unreachable must not stop a game from booting, so this cannot fail the
+  // backend - it logs and retries in the background.
+  GroovyMiSTer::Open();
+
   return true;
 }
 
 void VideoBackendBase::ShutdownShared()
 {
+  // First, while g_gfx still exists: the sender thread has to be joined and the MiSTer told
+  // we are going away before the textures it reads from are destroyed.
+  GroovyMiSTer::Close();
+
   auto& system = Core::System::GetInstance();
   system.GetCustomResourceManager().Shutdown();
 

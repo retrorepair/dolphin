@@ -107,6 +107,15 @@ add_library(videocommon
   GraphicsModSystem/Runtime/GraphicsModActionData.h
   GraphicsModSystem/Runtime/GraphicsModActionFactory.cpp
   GraphicsModSystem/Runtime/GraphicsModActionFactory.h
+  GroovyMiSTer/GroovyMiSTer.h
+  GroovyMiSTer/GroovyMiSTerAudioTap.cpp
+  GroovyMiSTer/GroovyMiSTerAudioTap.h
+  GroovyMiSTer/GroovyMiSTerKeepAlive.h
+  GroovyMiSTer/GroovyMiSTerModeline.h
+  GroovyMiSTer/GroovyMiSTerOutput.cpp
+  GroovyMiSTer/GroovyMiSTerOutput.h
+  GroovyMiSTer/GroovyMiSTerPixels.cpp
+  GroovyMiSTer/GroovyMiSTerPixels.h
   GraphicsModSystem/Runtime/GraphicsModManager.cpp
   GraphicsModSystem/Runtime/GraphicsModManager.h
   HiresTextures.cpp
@@ -242,6 +251,8 @@ PUBLIC
   glslang::glslang
 PRIVATE
   fmt::fmt
+  groovymister
+  switchres
   spng::spng
   xxhash::xxhash
   imgui

@@ -8,6 +8,7 @@
 
 #include "AudioCommon/AlsaSoundStream.h"
 #include "AudioCommon/CubebStream.h"
+#include "AudioCommon/MiSTerSoundStream.h"
 #include "AudioCommon/Mixer.h"
 #include "AudioCommon/NullSoundStream.h"
 #include "AudioCommon/OpenALStream.h"
@@ -42,6 +43,8 @@ static std::unique_ptr<SoundStream> CreateSoundStreamForBackend(std::string_view
     return std::make_unique<OpenSLESStream>();
   else if (backend == BACKEND_WASAPI && WASAPIStream::IsValid())
     return std::make_unique<WASAPIStream>();
+  else if (backend == BACKEND_MISTER && MiSTerSound::IsValid())
+    return std::make_unique<MiSTerSound>();
   return {};
 }
 
@@ -131,6 +134,8 @@ std::vector<std::string> GetSoundBackends()
     backends.emplace_back(BACKEND_OPENSLES);
   if (WASAPIStream::IsValid())
     backends.emplace_back(BACKEND_WASAPI);
+  if (MiSTerSound::IsValid())
+    backends.emplace_back(BACKEND_MISTER);
 
   return backends;
 }

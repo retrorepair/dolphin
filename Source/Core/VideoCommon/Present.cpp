@@ -17,6 +17,7 @@
 #include "VideoCommon/AbstractGfx.h"
 #include "VideoCommon/FrameDumper.h"
 #include "VideoCommon/FramebufferManager.h"
+#include "VideoCommon/GroovyMiSTer/GroovyMiSTer.h"
 #include "VideoCommon/OnScreenUI.h"
 #include "VideoCommon/PostProcessing.h"
 #include "VideoCommon/VertexManagerBase.h"
@@ -214,6 +215,11 @@ void Presenter::ViSwap(u32 xfb_addr, u32 fb_width, u32 fb_stride, u32 fb_height,
 
   if (!is_duplicate || !g_ActiveConfig.bSkipPresentingDuplicateXFBs)
   {
+    // Before Present(), so the capture and the network send do not queue behind the host
+    // window's own presentation - the MiSTer is chasing its CRT's raster and the host
+    // window is not.
+    ProcessGroovyMiSTer();
+
     Present(&present_info);
     ProcessFrameDumping(ticks);
 
@@ -247,6 +253,8 @@ void Presenter::ImmediateSwap(u32 xfb_addr, u32 fb_width, u32 fb_stride, u32 fb_
 
   video_events.before_present_event.Trigger(present_info);
 
+  ProcessGroovyMiSTer();
+
   Present(&present_info);
   ProcessFrameDumping(ticks);
 
@@ -257,6 +265,19 @@ void Presenter::SetNextSwapEstimatedTime(u64 ticks, TimePoint host_time)
 {
   m_next_swap_estimated_ticks = ticks;
   m_next_swap_estimated_time = host_time;
+}
+
+void Presenter::ProcessGroovyMiSTer() const
+{
+  if (!GroovyMiSTer::IsActive() || !m_xfb_entry)
+    return;
+
+  // m_xfb_rect is the XFB at the internal-resolution multiplier, which is what the host
+  // window wants; m_last_xfb_width/height are the framebuffer the game actually programmed,
+  // which is what a CRT wants. Both go over: the module scales the former down to the
+  // modeline switchres derives from the latter.
+  GroovyMiSTer::OnXFB(m_xfb_entry->texture.get(), m_xfb_rect, m_last_xfb_width,
+                      m_last_xfb_height);
 }
 
 void Presenter::ProcessFrameDumping(u64 ticks) const

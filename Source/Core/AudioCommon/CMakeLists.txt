@@ -3,6 +3,8 @@ add_library(audiocommon
   AudioCommon.h
   CubebStream.h
   Enums.h
+  MiSTerSoundStream.cpp
+  MiSTerSoundStream.h
   Mixer.cpp
   Mixer.h
   SurroundDecoder.cpp
